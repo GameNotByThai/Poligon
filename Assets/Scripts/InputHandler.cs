@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 namespace Ksantee
@@ -10,7 +8,7 @@ namespace Ksantee
         float vertical;
 
         bool aimInput;
-        bool sprinntInput;
+        bool sprintInput;
         bool shootInput;
         bool crouchInput;
         bool reloadInput;
@@ -22,8 +20,7 @@ namespace Ksantee
         float delta;
 
         public StatesManager states;
-
-        public Transform camHolder;
+        public CameraHandler camHandler;
 
         private void Start()
         {
@@ -33,17 +30,20 @@ namespace Ksantee
         public void InitInGame()
         {
             states.Init();
+            camHandler.Init(this);
             isInit = true;
         }
 
         private void FixedUpdate()
         {
-            if(!isInit) return;
+            if (!isInit) return;
 
             delta = Time.fixedDeltaTime;
             GetInput_FixedUpdate();
             InGame_UpdateStates_FixedUpdate();
             states.FixedTick(delta);
+
+            camHandler.FixedTick(delta);
         }
 
         void GetInput_FixedUpdate()
@@ -58,8 +58,8 @@ namespace Ksantee
             states.inp.vertical = vertical;
             states.inp.moveAmount = Mathf.Clamp01(Mathf.Abs(horizontal) + Mathf.Abs(vertical));
 
-            Vector3 moveDir = camHolder.forward * vertical;
-            moveDir += camHolder.right * horizontal;
+            Vector3 moveDir = camHandler.mTransform.forward * vertical;
+            moveDir += camHandler.mTransform.right * horizontal;
             moveDir.Normalize();
             states.inp.moveDirection = moveDir;
         }

@@ -1,4 +1,3 @@
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -71,13 +70,13 @@ namespace Ksantee
 
         void SetupAnimator()
         {
-            if(activeModel == null)
+            if (activeModel == null)
             {
                 anim = GetComponentInChildren<Animator>();
                 activeModel = anim.gameObject;
             }
 
-            if(anim ==  null)
+            if (anim == null)
                 anim = activeModel.GetComponent<Animator>();
 
             anim.applyRootMotion = false;
@@ -88,7 +87,8 @@ namespace Ksantee
             Rigidbody[] rigids = activeModel.GetComponentsInChildren<Rigidbody>();
             foreach (var rigidbody in rigids)
             {
-                if(rigidbody == rb)
+                Debug.Log(rigidbody.gameObject.name);
+                if (rigidbody == rb)
                 {
                     continue;
                 }
@@ -100,7 +100,7 @@ namespace Ksantee
                 ragdollColliders.Add(collider);
 
                 rigidbody.isKinematic = true;
-                rigidbody.gameObject.layer = 6;
+                rigidbody.gameObject.layer = 10;
             }
         }
         public void FixedTick(float d)
@@ -110,7 +110,7 @@ namespace Ksantee
             {
                 case CharState.normal:
                     states.onGround = OnGround();
-                    if(states.isAiming)
+                    if (states.isAiming)
                     {
 
                     }
@@ -157,7 +157,7 @@ namespace Ksantee
             Vector3 targetDir = inp.moveDirection;
             targetDir.y = 0;
 
-            if(targetDir == Vector3.zero)
+            if (targetDir == Vector3.zero)
                 targetDir = mTransform.forward;
 
             Quaternion lookDir = Quaternion.LookRotation(targetDir);
@@ -206,7 +206,7 @@ namespace Ksantee
             Vector3 dir = -Vector3.up;
             float dis = .7f;
             RaycastHit hit;
-            if(Physics.Raycast(origin, dir, out hit, dis, ignoreForGround))
+            if (Physics.Raycast(origin, dir, out hit, dis, ignoreForGround))
             {
                 Vector3 tp = hit.point;
                 mTransform.position = tp;
