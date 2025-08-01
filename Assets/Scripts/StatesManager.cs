@@ -17,6 +17,7 @@ namespace Ksantee
             public float moveAmount;
             public Vector3 moveDirection;
             public Vector3 aimPositon;
+            public Vector3 rotateDirection;
         }
 
         [System.Serializable]
@@ -29,8 +30,11 @@ namespace Ksantee
             public bool isInteracting;
         }
 
+        #region References
         public Animator anim;
         public GameObject activeModel;
+        [HideInInspector]
+        public AnimatorHook a_hook;
 
         [HideInInspector]
         public Rigidbody rb;
@@ -46,11 +50,16 @@ namespace Ksantee
         [HideInInspector]
         public LayerMask ignoreForGround;
 
+        //[HideInInspector]
+        //public Transform referencesParent;
+        [HideInInspector]
         public Transform mTransform;
         public CharState currentState;
 
         public float delta;
+        #endregion
 
+        #region Init
         public void Init()
         {
             mTransform = transform;
@@ -66,6 +75,9 @@ namespace Ksantee
 
             ignoreLayers = ~(1 << 9);
             ignoreForGround = ~(1 << 9 | 1 << 10);
+
+            a_hook = activeModel.AddComponent<AnimatorHook>();
+            a_hook.Init(this);
         }
 
         void SetupAnimator()
@@ -103,6 +115,9 @@ namespace Ksantee
                 rigidbody.gameObject.layer = 10;
             }
         }
+        #endregion
+
+        #region FixedUpdate
         public void FixedTick(float d)
         {
             delta = d;
@@ -111,14 +126,10 @@ namespace Ksantee
                 case CharState.normal:
                     states.onGround = OnGround();
                     if (states.isAiming)
-                    {
-
-                    }
+                        MovementAiming();
                     else
-                    {
                         MovementNormal();
-                        RotationNormal();
-                    }
+                    RotationNormal();
                     break;
                 case CharState.onAir:
                     rb.drag = 0;
@@ -136,11 +147,6 @@ namespace Ksantee
 
         void MovementNormal()
         {
-            if (inp.moveAmount > 0.05f)
-                rb.drag = 0;
-            else
-                rb.drag = 4;
-
             float speed = stats.walkSpeed;
             if (states.isRunning)
                 speed = stats.runSpeed;
@@ -152,9 +158,19 @@ namespace Ksantee
             rb.velocity = dir;
         }
 
+        void MovementAiming()
+        {
+            float speed = stats.aimSpeed;
+            Vector3 dir = inp.moveDirection * speed;
+            rb.velocity = dir;
+        }
+
         void RotationNormal()
         {
-            Vector3 targetDir = inp.moveDirection;
+            if(!states.isAiming)
+                inp.rotateDirection = inp.moveDirection;
+
+            Vector3 targetDir = inp.rotateDirection;
             targetDir.y = 0;
 
             if (targetDir == Vector3.zero)
@@ -164,20 +180,9 @@ namespace Ksantee
             Quaternion targetRot = Quaternion.Slerp(mTransform.rotation, lookDir, stats.rotateSpeed * delta);
             mTransform.rotation = targetRot;
         }
+        #endregion
 
-        void HandleAnimatonsNormal()
-        {
-            float anim_v = inp.moveAmount;
-            anim.SetFloat("Vertical", anim_v, 0.15f, delta);
-        }
-
-        void MovementAiming()
-        {
-
-        }
-
-
-
+        #region Update
         public void Tick(float d)
         {
             delta = d;
@@ -185,7 +190,7 @@ namespace Ksantee
             {
                 case CharState.normal:
                     states.onGround = OnGround();
-                    HandleAnimatonsNormal();
+                    HandleAnimationsAll();
                     break;
                 case CharState.onAir:
                     states.onGround = OnGround();
@@ -198,6 +203,42 @@ namespace Ksantee
                     break;
             }
         }
+
+        void HandleAnimationsAll()
+        {
+            anim.SetBool(StaticStrings.sprint, states.isRunning);
+            anim.SetBool(StaticStrings.aiming, states.isAiming);
+            anim.SetBool(StaticStrings.crouch, states.isCrouching);
+
+            if (states.isAiming)
+            {
+                HandleAnimationsAiming();
+            }
+            else
+            {
+                HandleAnimatonsNormal();
+            }
+        }
+
+        void HandleAnimatonsNormal()
+        {
+            if (inp.moveAmount > 0.05f)
+                rb.drag = 0;
+            else
+                rb.drag = 4;
+
+            float anim_v = inp.moveAmount;
+            anim.SetFloat(StaticStrings.vertical, anim_v, 0.15f, delta);
+        }
+
+        void HandleAnimationsAiming()
+        {
+            //float v = inp.vertical;
+            //float h = inp.horizontal;
+            float anim_v = inp.moveAmount;
+            anim.SetFloat(StaticStrings.vertical, anim_v, 0.2f, delta);
+        }
+        #endregion
 
         bool OnGround()
         {

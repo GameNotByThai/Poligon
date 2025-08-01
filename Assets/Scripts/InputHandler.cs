@@ -34,6 +34,7 @@ namespace Ksantee
             isInit = true;
         }
 
+        #region FixedUpdate
         private void FixedUpdate()
         {
             if (!isInit) return;
@@ -48,8 +49,8 @@ namespace Ksantee
 
         void GetInput_FixedUpdate()
         {
-            vertical = Input.GetAxis("Vertical");
-            horizontal = Input.GetAxis("Horizontal");
+            vertical = Input.GetAxis(StaticStrings.Vertical);
+            horizontal = Input.GetAxis(StaticStrings.Horizontal);
         }
 
         void InGame_UpdateStates_FixedUpdate()
@@ -62,16 +63,54 @@ namespace Ksantee
             moveDir += camHandler.mTransform.right * horizontal;
             moveDir.Normalize();
             states.inp.moveDirection = moveDir;
-        }
 
+            states.inp.rotateDirection = camHandler.mTransform.forward;
+        }
+        #endregion
+
+        public bool debugAim;
+
+        #region Update
         private void Update()
         {
             if (!isInit) return;
 
             delta = Time.deltaTime;
+            GetInput_Update();
+            AimPosition();
+            InGame_UpdateStates_Update();
+
+            if(debugAim)
+                states.states.isAiming = true;
 
             states.Tick(delta);
         }
+
+        void GetInput_Update()
+        {
+            aimInput = Input.GetMouseButton(1);
+
+        }
+
+        void InGame_UpdateStates_Update()
+        {
+            states.states.isAiming = aimInput;
+        }
+
+        void AimPosition()
+        {
+            Ray ray = new Ray(camHandler.camTrans.position, camHandler.camTrans.forward);
+            states.inp.aimPositon = ray.GetPoint(30);
+
+            RaycastHit hit;
+            if(Physics.Raycast(ray, out hit, 100, states.ignoreLayers))
+            {
+                states.inp.aimPositon = hit.point;
+            }
+        }
+
+        #endregion
+
     }
 
     public enum GamePhase
