@@ -23,12 +23,14 @@ namespace Ksantee
         public bool disable_o_h;
         public bool disable_m_h;
 
+        RuntimeWeapon curWeapon;
+
         public void Init(StatesManager st)
         {
             states = st;
             anim = states.anim;
 
-            shoulder = anim.GetBoneTransform(HumanBodyBones.RightShoulder).transform;
+            shoulder = anim.GetBoneTransform(HumanBodyBones.RightShoulder);
             aimPivot = new GameObject().transform;
             aimPivot.name = "aim_pivot";
             aimPivot.transform.parent = states.transform;
@@ -37,6 +39,16 @@ namespace Ksantee
             rh_target.parent = aimPivot;
             states.inp.aimPositon = states.transform.position + transform.forward * 15;
             states.inp.aimPositon.y += 1.4f;
+        }
+
+        public void EquipWeapon(RuntimeWeapon rw)
+        {
+            Weapon w = rw.w_actual;
+            lh_target = rw.w_hook.leftHandIK;
+
+            rh_target.localPosition = w.m_h_ik.pos;
+            rh_target.localEulerAngles = w.m_h_ik.rot;
+            curWeapon = rw;
         }
 
         private void OnAnimatorMove()
@@ -89,8 +101,6 @@ namespace Ksantee
 
             if (disable_m_h)
                 t_m_weight = 0;
-
-            
 
             if (lh_target != null)
                 o_h_weight = 1;
@@ -171,8 +181,8 @@ namespace Ksantee
                     recoilIsInit= false;
                 }
 
-                offsetPosition = Vector3.forward;
-                offsetRotation = Vector3.right * 90;
+                offsetPosition = Vector3.forward * curWeapon.w_actual.recoilZ.Evaluate(recoilT);
+                offsetRotation = Vector3.right * curWeapon.w_actual.recoilY.Evaluate(recoilT) * 90;
 
                 rh_target.localPosition = basePosition + offsetPosition;
                 rh_target.localEulerAngles = baseRotation + offsetRotation;
